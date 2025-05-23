@@ -1,4 +1,4 @@
-package LRU
+package MRU
 
 import (
 	"container/list"
@@ -7,7 +7,7 @@ import (
 
 type CachedFunc[K comparable, V any] func(K) (V, error)
 
-type LRUCache struct {
+type MRUCache struct {
 	capacity uint32
 	data     map[any]*list.Element
 	elements *list.List
@@ -19,7 +19,7 @@ type element struct {
 	value any
 }
 
-func (lru *LRUCache) Put(key any, value any) {
+func (lru *MRUCache) Put(key any, value any) {
 	lru.mutex.Lock()
 	defer lru.mutex.Unlock()
 
@@ -29,15 +29,15 @@ func (lru *LRUCache) Put(key any, value any) {
 	}
 
 	if lru.elements.Len() == int(lru.capacity) {
-		delete(lru.data, lru.elements.Back().Value.(*element).key)
-		lru.elements.Remove(lru.elements.Back())
+		delete(lru.data, lru.elements.Front().Value.(*element).key)
+		lru.elements.Remove(lru.elements.Front())
 	}
 
 	lru.elements.PushFront(&element{key: key, value: value})
 	lru.data[key] = lru.elements.Front()
 }
 
-func (lru *LRUCache) Get(key any) any {
+func (lru *MRUCache) Get(key any) any {
 	lru.mutex.RLock()
 	defer lru.mutex.RUnlock()
 	if value, exists := lru.data[key]; exists {
@@ -48,8 +48,8 @@ func (lru *LRUCache) Get(key any) any {
 	}
 }
 
-func NewLRUDecorator[K comparable, V any](capacity uint32) func(CachedFunc[K, V]) CachedFunc[K, V] {
-	cache := &LRUCache{
+func NewMRUDecorator[K comparable, V any](capacity uint32) func(CachedFunc[K, V]) CachedFunc[K, V] {
+	cache := &MRUCache{
 		capacity: capacity,
 		data:     make(map[any]*list.Element),
 		elements: list.New(),
@@ -71,8 +71,8 @@ func NewLRUDecorator[K comparable, V any](capacity uint32) func(CachedFunc[K, V]
 	}
 }
 
-func New(capacity uint32) *LRUCache {
-	return &LRUCache{
+func New(capacity uint32) *MRUCache {
+	return &MRUCache{
 		capacity: capacity,
 		data:     make(map[any]*list.Element),
 		elements: list.New(),

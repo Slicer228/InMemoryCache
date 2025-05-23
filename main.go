@@ -16,6 +16,11 @@ func main() {
 	Println(sumCached(1))
 	Println(sumCached(2))
 	Println(sumCached(3))
+	Println(sumCached(4))
+	Println(sumCached(5))
+	Println(sumCached(3))
+	Println(sumCached(1))
+	Println(sumCached(6))
 
 	return
 }
