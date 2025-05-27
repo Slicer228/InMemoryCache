@@ -19,29 +19,29 @@ type element struct {
 	value any
 }
 
-func (lru *MRUCache) Put(key any, value any) {
-	lru.mutex.Lock()
-	defer lru.mutex.Unlock()
+func (mru *MRUCache) Put(key any, value any) {
+	mru.mutex.Lock()
+	defer mru.mutex.Unlock()
 
-	if el, exists := lru.data[key]; exists {
-		lru.elements.Remove(el)
-		delete(lru.data, key)
+	if el, exists := mru.data[key]; exists {
+		mru.elements.Remove(el)
+		delete(mru.data, key)
 	}
 
-	if lru.elements.Len() == int(lru.capacity) {
-		delete(lru.data, lru.elements.Front().Value.(*element).key)
-		lru.elements.Remove(lru.elements.Front())
+	if mru.elements.Len() == int(mru.capacity) {
+		delete(mru.data, mru.elements.Front().Value.(*element).key)
+		mru.elements.Remove(mru.elements.Front())
 	}
 
-	lru.elements.PushFront(&element{key: key, value: value})
-	lru.data[key] = lru.elements.Front()
+	mru.elements.PushFront(&element{key: key, value: value})
+	mru.data[key] = mru.elements.Front()
 }
 
-func (lru *MRUCache) Get(key any) any {
-	lru.mutex.RLock()
-	defer lru.mutex.RUnlock()
-	if value, exists := lru.data[key]; exists {
-		lru.elements.MoveToFront(value)
+func (mru *MRUCache) Get(key any) any {
+	mru.mutex.RLock()
+	defer mru.mutex.RUnlock()
+	if value, exists := mru.data[key]; exists {
+		mru.elements.MoveToFront(value)
 		return value.Value.(*element).value
 	} else {
 		return nil
