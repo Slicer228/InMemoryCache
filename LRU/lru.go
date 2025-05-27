@@ -1,11 +1,16 @@
 package LRU
 
 import (
+	"InMemoryCache/abstract"
 	"container/list"
 	"sync"
 )
 
 type CachedFunc[K comparable, V any] func(K) (V, error)
+
+type LRU interface {
+	abstract.Cache
+}
 
 type LRUCache struct {
 	capacity uint32
@@ -46,6 +51,29 @@ func (lru *LRUCache) Get(key any) any {
 	} else {
 		return nil
 	}
+}
+
+func (lru *LRUCache) Delete(key any) {
+	lru.mutex.Lock()
+	defer lru.mutex.Unlock()
+
+	if el, exists := lru.data[key]; exists {
+		lru.elements.Remove(el)
+		delete(lru.data, el.Value.(*element).key)
+	}
+}
+
+func (mru *LRUCache) Size() int {
+	return len(mru.data)
+}
+
+func (mru *LRUCache) Contains(key any) bool {
+	mru.mutex.RLock()
+	defer mru.mutex.RUnlock()
+
+	_, exists := mru.data[key]
+
+	return exists
 }
 
 func NewLRUDecorator[K comparable, V any](capacity uint32) func(CachedFunc[K, V]) CachedFunc[K, V] {

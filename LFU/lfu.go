@@ -1,6 +1,7 @@
 package LFU
 
 import (
+	"InMemoryCache/abstract"
 	"container/list"
 	"sync"
 )
@@ -8,6 +9,12 @@ import (
 //In case of several equal access times values LFU algorithm uses MRU logic
 
 type CachedFunc[K comparable, V any] func(K) (V, error)
+
+type LFU interface {
+	abstract.Cache
+	migrateElementToNewBucket(el *list.Element)
+	deleteLFUElement()
+}
 
 type LFUCache struct {
 	capacity               uint64                // max value of stored keys in cache
@@ -96,6 +103,29 @@ func (lfu *LFUCache) Get(key any) any {
 	} else {
 		return nil
 	}
+}
+
+func (lfu *LFUCache) Delete(key any) {
+	lfu.mutex.Lock()
+	defer lfu.mutex.Unlock()
+
+	if el, exists := lfu.data[key]; exists {
+		lfu.elements[el.Value.(*element).useCount].Remove(el)
+		delete(lfu.data, el.Value.(*element).key)
+	}
+}
+
+func (lfu *LFUCache) Size() int {
+	return len(lfu.data)
+}
+
+func (lfu *LFUCache) Contains(key any) bool {
+	lfu.mutex.RLock()
+	defer lfu.mutex.RUnlock()
+
+	_, exists := lfu.data[key]
+
+	return exists
 }
 
 func NewLFUDecorator[K comparable, V any](capacity, maxAccessCountToUpdate uint64) func(CachedFunc[K, V]) CachedFunc[K, V] {

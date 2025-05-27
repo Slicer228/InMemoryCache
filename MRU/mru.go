@@ -1,11 +1,16 @@
 package MRU
 
 import (
+	"InMemoryCache/abstract"
 	"container/list"
 	"sync"
 )
 
 type CachedFunc[K comparable, V any] func(K) (V, error)
+
+type MRU interface {
+	abstract.Cache
+}
 
 type MRUCache struct {
 	capacity uint32
@@ -46,6 +51,29 @@ func (mru *MRUCache) Get(key any) any {
 	} else {
 		return nil
 	}
+}
+
+func (mru *MRUCache) Delete(key any) {
+	mru.mutex.Lock()
+	defer mru.mutex.Unlock()
+
+	if el, exists := mru.data[key]; exists {
+		mru.elements.Remove(el)
+		delete(mru.data, el.Value.(*element).key)
+	}
+}
+
+func (mru *MRUCache) Size() int {
+	return len(mru.data)
+}
+
+func (mru *MRUCache) Contains(key any) bool {
+	mru.mutex.RLock()
+	defer mru.mutex.RUnlock()
+
+	_, exists := mru.data[key]
+
+	return exists
 }
 
 func NewMRUDecorator[K comparable, V any](capacity uint32) func(CachedFunc[K, V]) CachedFunc[K, V] {
