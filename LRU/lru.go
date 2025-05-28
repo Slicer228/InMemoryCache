@@ -1,8 +1,8 @@
 package LRU
 
 import (
-	"InMemoryCache/abstract"
 	"container/list"
+	"inmemorycache/abstract"
 	"sync"
 )
 

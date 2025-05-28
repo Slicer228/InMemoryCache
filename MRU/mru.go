@@ -1,8 +1,8 @@
 package MRU
 
 import (
-	"InMemoryCache/abstract"
 	"container/list"
+	"inmemorycache/abstract"
 	"sync"
 )
 
